@@ -22,7 +22,7 @@ class hypers:
     img_height = 64
     batch_size = 32
     lr = 1e-3
-    epochs = 100
+    epochs = 50
     loss = 'binary_crossentropy'
 
 
@@ -64,8 +64,8 @@ RETRIEVE DATA FROM DIRECTORIES AND PREPROCESS
 def pull_and_preprocess_train_data(p):
     train_datagen = ImageDataGenerator(
         rescale=1./255,
-        # shear_range=0.2,
-        # zoom_range=0.2,
+        shear_range=0.2,
+        zoom_range=0.2,
         horizontal_flip=True
     )
 
@@ -110,51 +110,7 @@ def pull_and_preprocess_test_data(p):
 CONSTRUCT MODEL
 """
 def get_model(p):
-    #model = Sequential()
-    # model.add(Conv2D(32, kernel_size = (2, 2), activation='relu', input_shape=(64,64,3)))
-    # model.add(Conv2D(64, kernel_size = (2, 2), activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2,2)))
-    # model.add(Dropout(0.2))
-    # model.add(Conv2D(128, kernel_size = (2, 2), activation='relu', input_shape=(64,64,3)))
-    # model.add(Conv2D(256, kernel_size = (2, 2), activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2,2)))
-    # model.add(BatchNormalization())
-    # # model.add(Conv2D(64, kernel_size=(3,3), activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2,2)))
-    # # model.add(BatchNormalization())
-    # # model.add(Conv2D(64, kernel_size=(3,3), activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2,2)))
-    # # model.add(BatchNormalization())
-    # # model.add(Conv2D(64, kernel_size=(3,3), activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2,2)))
-    # # model.add(BatchNormalization())
-    # # model.add(Conv2D(96, kernel_size=(3,3), activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2,2)))
-    # # model.add(BatchNormalization())
-    # # model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2,2)))
-    # model.add(BatchNormalization())
-    # model.add(Dropout(0.2))
-    # model.add(Flatten())
-    # model.add(Dense(1024, activation='relu'))
     model = Sequential()
-    # model.add(Conv2D(32, (3, 3), input_shape=(64, 64, 3)))
-    # # model.add(Conv2D(32, (3, 3)))
-    # model.add(Activation('relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # # model.add(Dropout(0.5))
-    # model.add(Conv2D(32, (3, 3)))
-    # model.add(Activation('relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    #
-    # model.add(Conv2D(64, (3, 3)))
-    # model.add(Activation('relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model.add(Conv2D(32, (3, 3)))
-    # model.add(Activation('relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-
-    # the model so far outputs 3D feature maps (height, width, features)
     chanDim = -1
 
     model.add(Conv2D(32, (3, 3), padding="same", input_shape=(64, 64, 3)))
@@ -188,18 +144,6 @@ def get_model(p):
     model.add(BatchNormalization())
     model.add(Dropout(0.5))
 
-	# use a *softmax* activation for single-label classification
-	# and *sigmoid* activation for multi-label classification
-	# model.add(Dense(4))
-	# model.add(Activation('softmax'))
-    # #
-    # model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-    # model.add(Dense(128))
-    # model.add(Dense(128))
-    # model.add(Activation('relu'))
-    # model.add(Dropout(0.1))
-    # model.add(Dense(1024, activation='relu'))
-    # model.add(Dropout(0.2))
     opt = Adam(lr=p.lr, decay=p.lr / p.epochs)
     model.add(Dense(4, activation = 'softmax'))
     opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
