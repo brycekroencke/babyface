@@ -22,8 +22,8 @@ class hypers:
     img_height = 64
     batch_size = 32
     lr = 1e-3
-    epochs = 50
-    loss = 'binary_crossentropy'
+    epochs = 5
+    loss = 'categorical_crossentropy'
 
 
 def main():
@@ -53,7 +53,7 @@ def main():
 
     trained_model = train_model(p)
     save_trained_model(trained_model)
-    # model_testing(trained_model, p)
+    model_testing(trained_model, p)
 
     print_report(p, start)
 
@@ -64,43 +64,43 @@ RETRIEVE DATA FROM DIRECTORIES AND PREPROCESS
 def pull_and_preprocess_train_data(p):
     train_datagen = ImageDataGenerator(
         rescale=1./255,
-        shear_range=0.2,
         zoom_range=0.2,
+        rotation_range=20,
         horizontal_flip=True
     )
 
     test_datagen = ImageDataGenerator(rescale=1./255)
     train_generator = train_datagen.flow_from_directory(
-        directory=r"../reorganized_dset",
+        directory=r"../split_data/train",
         target_size=(p.img_width, p.img_height),
         color_mode="rgb",
         batch_size=p.batch_size,
         shuffle=True,
         class_mode="categorical"
     )
-    #
-    # valid_generator = test_datagen.flow_from_directory(
-    #     r"/Users/brycekroencke/Documents/ORNL/hayleys_dataset/Validation",
-    #     target_size=(p.img_width, p.img_height),
-    #     color_mode="rgb",
-    #     batch_size=p.batch_size,
-    #     shuffle=True,
-    #     class_mode="categorical"
-    # )
+
+    valid_generator = test_datagen.flow_from_directory(
+        directory=r"../split_data/validation",
+        target_size=(p.img_width, p.img_height),
+        color_mode="rgb",
+        batch_size=p.batch_size,
+        shuffle=True,
+        class_mode="categorical"
+    )
 
 
-    return train_generator#, valid_generator
+    return train_generator, valid_generator
 
 def pull_and_preprocess_test_data(p):
     test_datagen = ImageDataGenerator(rescale=1./255)
 
     test_generator = test_datagen.flow_from_directory(
-        r"/Users/brycekroencke/Documents/ORNL/hayleys_dataset/Test",
+        directory=r"../split_data/test",
         target_size=(p.img_width, p.img_height),
         color_mode="rgb",
         batch_size=1,
         shuffle=False,
-        class_mode="binary"
+        class_mode="categorical"
     )
     return test_generator
 
@@ -137,7 +137,7 @@ def get_model(p):
     model.add(BatchNormalization(axis=chanDim))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
-	# first (and only) set of FC => RELU layers
+	#first (and only) set of FC => RELU layers
     model.add(Flatten())
     model.add(Dense(1024))
     model.add(Activation("relu"))
@@ -145,8 +145,8 @@ def get_model(p):
     model.add(Dropout(0.5))
 
     opt = Adam(lr=p.lr, decay=p.lr / p.epochs)
-    model.add(Dense(4, activation = 'softmax'))
-    opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+    model.add(Dense(4, activation = 'sigmoid'))
+    # opt = keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
     model.compile(loss=p.loss, optimizer=opt, metrics = ['accuracy'])
     print(model.summary())
 
@@ -156,29 +156,29 @@ def get_model(p):
 START TRAINING
 """
 def train_model(p):
-    train_generator = pull_and_preprocess_train_data(p)#, valid_generator = pull_and_preprocess_train_data(p)
+    train_generator, valid_generator = pull_and_preprocess_train_data(p)
     # for i in train_generator:
     #     idx = (train_generator.batch_index - 1) * train_generator.batch_size
     #     print(train_generator.filenames[idx : idx + train_generator.batch_size])
     #     print(train_generator.class_indices)
     STEP_SIZE_TRAIN=train_generator.n//train_generator.batch_size
-    #STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
+    STEP_SIZE_VALID=valid_generator.n//valid_generator.batch_size
     model = get_model(p)
     model.fit_generator(
         train_generator,
         steps_per_epoch=STEP_SIZE_TRAIN,
-        epochs=p.epochs#,
-        # validation_data=valid_generator,
-        # validation_steps=STEP_SIZE_VALID
+        epochs=p.epochs,
+        validation_data=valid_generator,
+        validation_steps=STEP_SIZE_VALID
     )
 
     # """
     # EVALUATING RESULTS
     # """
-    # model.evaluate_generator(
-    #     generator=valid_generator,
-    #     steps=STEP_SIZE_VALID
-    # )
+    model.evaluate_generator(
+        generator=valid_generator,
+        steps=STEP_SIZE_VALID
+    )
     return model
 
 
@@ -219,7 +219,7 @@ def print_report(p, start):
     print("Img Dimensions:", p.img_width, "X", p.img_height)
     print("Epochs:", p.epochs)
     print("Batch Size:", p.batch_size)
-    print("Optimizer:", p.opt)
+    # print("Optimizer:", p.opt)
     print("Loss:", p.loss)
 
 
